@@ -40,7 +40,6 @@ def parse_arguments():
     parser.add_argument('--django-admin',
                           default=cfg.django_admin,
                           help="Path to the django-admin executable")
-    global arguments
     arguments = parser.parse_args()
     cfg.plinth_home = arguments.plinth_home
     cfg.django_admin = arguments.django_admin
@@ -68,37 +67,56 @@ LICENSE = """
 #
 """
 
-def bootstrap():
-    app = cfg.app
-    os.chdir(cfg.plinth_home)
-
-    # Checkout a new git branch from master
+def create_git_branch():
+    """Checkout a new git branch from master"""
     subprocess.call(['git', 'checkout', 'master'])
-    subprocess.call(['git', 'checkout', '-b', app])
+    subprocess.call(['git', 'checkout', '-b', cfg.app])
 
+
+def enable_module():
     # Add app to enabled modules
-    with open(os.path.join('data/etc/plinth/modules-enabled', app), 'w') as f:
-        f.write(".".join(["plinth.modules", app]))
+    with open(os.path.join('data/etc/plinth/modules-enabled', cfg.app), 'w') as f:
+        f.write(".".join(["plinth.modules", cfg.app]))
 
-    actions_file = os.path.join('actions', app)
 
-    # Create a new actions file
+def create_actions_file():
+    """Create a new actions file"""
+    actions_file = os.path.join('actions', cfg.app)
+
     with open(actions_file, 'w') as f:
         f.write(PY_SHE_BANG)
         f.write(LICENSE)
 
     subprocess.call(['chmod', '+x', actions_file])
 
-    module_directory = os.path.join("plinth" , "modules", app)
+
+def create_django_app():
+    module_directory = os.path.join("plinth" , "modules", cfg.app)
     # Create a new django module
     os.path.exists(module_directory) or os.makedirs(module_directory)
 
     # Create files in django module
-    subprocess.call([cfg.django_admin, 'startapp', app, module_directory])
+    subprocess.call([cfg.django_admin, 'startapp', cfg.app, module_directory])
 
-    # Create apache configuration
-    with open(os.path.join(cfg.plinth_home, 'data/etc/apache2/conf-available', "{}-plinth.conf".format(app)), 'w') as f:
+
+def create_apache_config():
+    """Create apache configuration"""
+    with open(os.path.join(cfg.plinth_home, 'data/etc/apache2/conf-available', "{}-plinth.conf".format(cfg.app)), 'w') as f:
         pass
+
+
+def bootstrap():
+    os.chdir(cfg.plinth_home)
+
+    create_git_branch()
+
+    enable_module()
+
+    create_actions_file()
+
+    create_django_app()
+
+    create_apache_config()
 
 
 def main():
