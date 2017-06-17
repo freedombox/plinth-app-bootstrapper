@@ -1,0 +1,113 @@
+#!/usr/local/bin/python3
+#
+# This file is part of plinth-app-bootstrapper
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+"""
+Script to quickly bootstrap a new plinth app
+"""
+
+import os
+import subprocess
+import argparse
+import cfg
+
+
+def parse_arguments():
+    """ Return parsed command line arguments as dictionary. """
+    parser = argparse.ArgumentParser(
+        description='Script to quickly bootstrap a new plinth app',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument(
+        '--app', help="Name of the new app")
+    parser.add_argument(
+        '--plinth-home',
+        default=cfg.plinth_home,
+        help="Location of Plinth's repository")
+    parser.add_argument('--django-admin',
+                          default=cfg.django_admin,
+                          help="Path to the django-admin executable")
+    global arguments
+    arguments = parser.parse_args()
+    cfg.plinth_home = arguments.plinth_home
+    cfg.django_admin = arguments.django_admin
+    cfg.app = arguments.app
+
+
+PY_SHE_BANG = "#!/usr/bin/python3"
+
+LICENSE = """
+#
+# This file is part of Plinth.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+"""
+
+def bootstrap():
+    app = cfg.app
+    os.chdir(cfg.plinth_home)
+
+    # Checkout a new git branch from master
+    subprocess.call(['git', 'checkout', 'master'])
+    subprocess.call(['git', 'checkout', '-b', app])
+
+    # Add app to enabled modules
+    with open(os.path.join('data/etc/plinth/modules-enabled', app), 'w') as f:
+        f.write(".".join(["plinth.modules", app]))
+
+    actions_file = os.path.join('actions', app)
+
+    # Create a new actions file
+    with open(actions_file, 'w') as f:
+        f.write(PY_SHE_BANG)
+        f.write(LICENSE)
+
+    subprocess.call(['chmod', '+x', actions_file])
+
+    module_directory = os.path.join("plinth" , "modules", app)
+    # Create a new django module
+    os.path.exists(module_directory) or os.makedirs(module_directory)
+
+    # Create files in django module
+    subprocess.call([cfg.django_admin, 'startapp', app, module_directory])
+
+    # Create apache configuration
+    with open(os.path.join(cfg.plinth_home, 'data/etc/apache2/conf-available', "{}-plinth.conf".format(app)), 'w') as f:
+        pass
+
+
+def main():
+    """Parse arguments and perform all duties."""
+    parse_arguments()
+    bootstrap()
+
+
+if __name__ == '__main__':
+    main()
+
+
