@@ -1,5 +1,5 @@
 #
-# This file is part of plinth-app-bootstrapper.
+# This file is part of Plinth.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -14,6 +14,21 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+URLs for the $app module.
+"""
 
+from django.conf.urls import url
 
-plinth_home = '/Users/njoseph/dev/freedombox/Plinth'
+from plinth.views import ServiceView
+from plinth.modules import $app
+
+urlpatterns = [
+    url(r'^apps/$app/$',
+        ServiceView.as_view(
+            service_id=$app.managed_services[0],
+            diagnostics_module_name='$app',
+            description=$app.description,
+            show_status_block=True),
+        name='index'),
+]
