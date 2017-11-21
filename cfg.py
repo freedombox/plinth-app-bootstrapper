@@ -14,6 +14,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+Configuration for Plinth App Bootstrapper
+"""
 
+from os.path import expanduser
 
-plinth_home = '/Users/njoseph/dev/freedombox/Plinth'
+# Set this to your Plinth project directory
+plinth_home = '{}/dev/freedombox/Plinth'.format(expanduser("~"))

@@ -19,15 +19,15 @@
 Script to quickly bootstrap a new plinth app
 """
 
-
-import os
-import cfg
-import string
 import argparse
+import os
+import string
 import subprocess
 
+import cfg
 
 CURR_DIR = "/".join(os.path.realpath(cfg.__file__).split("/")[:-1])
+
 
 def parse_arguments():
     """ Return parsed command line arguments as dictionary. """
@@ -35,12 +35,9 @@ def parse_arguments():
         description='Script to quickly bootstrap a new plinth app',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        '--app', help="Name of the new app")
-    parser.add_argument(
-        '--plinth-home',
-        default=cfg.plinth_home,
-        help="Location of Plinth's repository")
+    parser.add_argument('--app', help="Name of the new app")
+    parser.add_argument('--plinth-home', default=cfg.plinth_home,
+                        help="Location of Plinth's repository")
     arguments = parser.parse_args()
     cfg.plinth_home = arguments.plinth_home
     cfg.app = arguments.app
@@ -57,6 +54,7 @@ def enable_module():
     with open(os.path.join('data/etc/plinth/modules-enabled', cfg.app),
               'w') as f:
         f.write(".".join(["plinth.modules", cfg.app]))
+        f.write("\n")
 
 
 def create_actions_file():
@@ -75,7 +73,7 @@ def create_actions_file():
 
 def create_django_app():
     """Create a new django app for the new plinth app"""
-    django_app_dir = os.path.join("plinth" , "modules", cfg.app)
+    django_app_dir = os.path.join("plinth", "modules", cfg.app)
     os.path.exists(django_app_dir) or os.makedirs(django_app_dir)
 
     module_path = os.path.join(CURR_DIR, "templates", "module")
@@ -86,7 +84,6 @@ def create_django_app():
 
         with open(os.path.join(django_app_dir, fil), 'w') as f:
             f.write(string.replace(template, "$app", cfg.app))
-
 
 
 def create_apache_config():
@@ -118,5 +115,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

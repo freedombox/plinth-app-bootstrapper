@@ -20,14 +20,10 @@ Plinth module to configure $app.
 
 from django.utils.translation import ugettext_lazy as _
 
-from plinth import actions
-from plinth import action_utils
-from plinth import cfg
-from plinth import frontpage
 from plinth import service as service_module
+from plinth import action_utils, actions, cfg, frontpage
 from plinth.menu import main_menu
 from plinth.utils import format_lazy
-
 
 version = 1
 
@@ -35,7 +31,8 @@ managed_services = ['$app']
 
 managed_packages = ['$app']
 
-title = _('')
+name = _('')
+short_description = _('')
 
 description = [
     _(""),
@@ -47,20 +44,17 @@ service = None
 def init():
     """Intialize the module."""
     menu = main_menu.get('apps')
-    menu.add_urlname(title, 'glyphicon-refresh', '$app:index')
+    menu.add_urlname(name, 'glyphicon-refresh', '$app:index',
+                     short_description)
 
     global service
     setup_helper = globals()['setup_helper']
     if setup_helper.get_state() != 'needs-setup':
-        service = service_module.Service(
-            managed_services[0],
-            title,
-            ports=['http', 'https'],
-            is_external=True,
-            is_enabled=is_enabled,
-            enable=enable,
-            disable=disable,
-            is_running=is_running)
+        service = service_module.Service(managed_services[0], name, ports=[
+            'http', 'https'
+        ], is_external=True, is_enabled=is_enabled, enable=enable,
+                                         disable=disable,
+                                         is_running=is_running)
 
         if is_enabled():
             add_shortcut()
@@ -72,23 +66,19 @@ def setup(helper, old_version=None):
     helper.call('post', actions.superuser_run, '$app', ['enable'])
     global service
     if service is None:
-        service = service_module.Service(
-            managed_services[0],
-            title,
-            ports=['http', 'https'],
-            is_external=True,
-            is_enabled=is_enabled,
-            enable=enable,
-            disable=disable,
-            is_running=is_running)
+        service = service_module.Service(managed_services[0], name, ports=[
+            'http', 'https'
+        ], is_external=True, is_enabled=is_enabled, enable=enable,
+                                         disable=disable,
+                                         is_running=is_running)
     helper.call('post', service.notify_enabled, None, True)
     helper.call('post', add_shortcut)
 
 
 def add_shortcut():
     """Helper method to add a shortcut to the frontpage."""
-    frontpage.add_shortcut(
-        '$app', title, url='/$app', login_required=True)
+    frontpage.add_shortcut('$app', name, short_description=short_description,
+                           url='/$app', login_required=True)
 
 
 def is_running():
@@ -109,7 +99,7 @@ def enable():
 
 
 def disable():
-    """Enable the module."""
+    """Disable the module."""
     actions.superuser_run('$app', ['disable'])
     frontpage.remove_shortcut('$app')
 
@@ -119,7 +109,7 @@ def diagnose():
     results = []
 
     results.extend(
-        action_utils.diagnose_url_on_all(
-            'https://{host}/$app', check_certificate=False))
+        action_utils.diagnose_url_on_all('https://{host}/$app',
+                                         check_certificate=False))
 
     return results
